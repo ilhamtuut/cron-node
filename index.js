@@ -13,7 +13,7 @@ con.connect(function(err) {
 	console.log('Connected db');
 });
 
-cron.schedule('*/5 * * * *', function() {
+cron.schedule('*/1 * * * *', function() {
 	console.log('Running task every second');
   	sendToken();
 });
@@ -64,16 +64,17 @@ async function sendToken() {
 													amount   //amount
 												).send().then(output => {
 													console.log('- Output:', output, '\n');
+													if(output != undefined && output){
+														var txid = output;
+														var dataOut = { txid: output };
+														var data_json = JSON.stringify(dataOut);
+														con.query("UPDATE transactions SET txid='"+ txid +"', data_json='"+data_json+"', status=1 where id="+id+"", function (err, result, fields) {
+															if (err) throw err;
+															console.log(result.affectedRows + " record(s) updated");
+														});
+													}
 												});
 												console.log('result: ', trf);
-												if(trf != undefined && trf){
-													var txid = NULL;
-													var data_json = JSON.stringify(trf);
-													con.query("UPDATE transactions SET txid='"+ txid +"', data_json='"+data_json+"', status=1 where id="+id+"", function (err, result, fields) {
-														if (err) throw err;
-														console.log(result.affectedRows + " record(s) updated");
-													});
-												}
 											} catch(error) {
 												console.error("trigger smart contract error",error)
 											}
