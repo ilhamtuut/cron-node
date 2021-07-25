@@ -15,10 +15,10 @@ con.connect(function(err) {
 
 cron.schedule('*/1 * * * *', function() {
 	console.log('Running task every second');
-  	sendToken();
+  	sendTokenTRX();
 });
 
-async function sendToken() {
+async function sendTokenTRX() {
 	var today =  dateNow();
 	con.query("SELECT * FROM transactions WHERE status=0 AND description='Withdraw' ORDER BY id ASC LIMIT 1", function (err, result, fields) {
 		if (err) throw err;
