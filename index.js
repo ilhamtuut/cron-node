@@ -13,7 +13,7 @@ con.connect(function(err) {
 	console.log('Connected db');
 });
 
-cron.schedule('*/1 * * * *', function() {
+cron.schedule('*/5 * * * *', function() {
 	console.log('Running task every second');
   	sendTokenTRX();
 });
