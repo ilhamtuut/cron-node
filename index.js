@@ -13,7 +13,7 @@ con.connect(function(err) {
 	console.log('Connected db');
 });
 
-cron.schedule('*/5 * * * *', function() {
+cron.schedule('*/1 * * * *', function() {
 	console.log('Running task every second');
   	sendTokenTRX();
 });
@@ -32,7 +32,7 @@ async function sendTokenTRX() {
 				if (err) throw err;
 				result.forEach(function(row) {
 					var wallet_id = row.wallet_id;
-					con.query("SELECT * FROM wallets WHERE user_id=" + user_id + " AND currency_id=" + wallet_id + "", function (err, result, fields) {
+					con.query("SELECT * FROM wallets WHERE user_id=" + user_id + " AND id=" + wallet_id + "", function (err, result, fields) {
 						if (err) throw err;
 						result.forEach(function(row) {
 							var currency_id = row.currency_id;
@@ -58,23 +58,30 @@ async function sendTokenTRX() {
 												console.log('amount :' + amount);
 												console.log('toAddress :' + toAddress);
 												console.log('smart_contract :' + trc20ContractAddress);
-
-												const trf = await contract.transfer(
-													toAddress, //address _to
-													amount   //amount
-												).send().then(output => {
-													console.log('- Output:', output, '\n');
-													if(output != undefined && output){
-														var txid = output;
-														var dataOut = { txid: output };
-														var data_json = JSON.stringify(dataOut);
-														con.query("UPDATE transactions SET txid='"+ txid +"', data_json='"+data_json+"', status=1 where id="+id+"", function (err, result, fields) {
-															if (err) throw err;
-															console.log(result.affectedRows + " record(s) updated");
-														});
-													}
+												let ownBalance = 0;
+												await contract.balanceOf('TWo85oJu5jtzU7bN4AZpVfM5qSFJdwuiSX').call().then((result) => {
+													ownBalance = tronWeb.toDecimal(result.balance._hex);
+													console.log('ZIO : ' + ownBalance)
 												});
-												console.log('result: ', trf);
+												
+												if(amount <= ownBalance){
+													const trf = await contract.transfer(
+														toAddress, //address _to
+														amount   //amount
+													).send().then(output => {
+														console.log('- Output:', output, '\n');
+														if(output != undefined && output){
+															var txid = output;
+															var dataOut = { txid: output };
+															var data_json = JSON.stringify(dataOut);
+															con.query("UPDATE transactions SET txid='"+ txid +"', data_json='"+data_json+"', status=1 where id="+id+"", function (err, result, fields) {
+																if (err) throw err;
+																console.log(result.affectedRows + " record(s) updated");
+															});
+														}
+													});
+													console.log('result: ', trf);
+												}
 											} catch(error) {
 												console.error("trigger smart contract error",error)
 											}
